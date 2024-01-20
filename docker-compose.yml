@@ -1,0 +1,10 @@
+version: "3.8"
+services:
+  api:
+    container_name: "site-api"
+    build:
+      context: "."
+
+networks:
+  traveling:
+    external: True

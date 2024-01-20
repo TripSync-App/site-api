@@ -1,0 +1,13 @@
+[project]
+name = ""
+version = ""
+description = ""
+authors = [
+    {name = "Jayden", email = "jpylesbusiness@gmail.com"},
+]
+dependencies = [
+    "fastapi>=0.109.0",
+    "uvicorn>=0.26.0",
+]
+requires-python = ">=3.11"
+license = {text = "MIT"}
