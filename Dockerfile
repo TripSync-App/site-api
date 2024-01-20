@@ -10,4 +10,4 @@ RUN pdm install --prod --no-lock --no-editable -vv
 
 EXPOSE 5000
 
-ENTRYPOINT ["pdm", "run", "python", "-m", "uvicorn", "site_api.app:app"]
+ENTRYPOINT ["pdm", "run", "python", "-m", "uvicorn", "site_api.app:app", "--reload"]

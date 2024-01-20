@@ -4,6 +4,8 @@ services:
     container_name: "site-api"
     build:
       context: "."
+    volumes:
+      - ./src/site_api:/project/site_api
 
 networks:
   traveling:
