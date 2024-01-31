@@ -6,10 +6,10 @@ discussion_router = APIRouter()
 
 
 @discussion_router.get("/discussions")
-async def get_vacations():
+async def get_discussions():
     return await dbf.query("SELECT default::Discussion {**};")
 
 
 @discussion_router.post("/discussions")
-async def make_vacations():
+async def make_discussions():
     ...

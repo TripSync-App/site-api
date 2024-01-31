@@ -11,5 +11,8 @@ async def get_users():
 
 
 @user_router.post("/users")
-async def make_users():
-    ...
+async def make_users(request: Request):
+    res = await request.json()
+    assert res.get("user")
+
+    return await dbf.insert_user(res.get("user"))
