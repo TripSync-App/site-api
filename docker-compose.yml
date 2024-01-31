@@ -4,6 +4,8 @@ services:
     container_name: "site-api"
     build:
       context: "."
+    ports:
+      - "8000:8000"
     volumes:
       - ./src/site_api:/project/site_api
 

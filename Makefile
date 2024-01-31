@@ -1,10 +1,10 @@
 PHONY: stop remove build up
 
 stop:
-	docker stop site_api
+	docker stop site-api
 
 remove:
-	docker remove site_api
+	docker remove site-api
 
 build:
 	docker compose build --no-cache
