@@ -10,6 +10,14 @@ async def get_users():
     return await dbf.query("SELECT default::User{**};")
 
 
+@user_router.post("/users/login")
+async def login(request: Request):
+    res = await request.json()
+    assert res.get("credentials")
+
+    return await dbf.login(res.get("credentials"))
+
+
 @user_router.post("/users")
 async def make_users(request: Request):
     res = await request.json()

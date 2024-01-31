@@ -1,3 +1,4 @@
+import bcrypt
 import edgedb
 
 DB_HOST = "edgedb"
@@ -21,15 +22,25 @@ async def insert_user(user: dict):
     client = create_client()
     assert user.get("first_name")
     assert user.get("last_name")
+    assert user.get("username")
+    assert user.get("password")
 
     async for tx in client.transaction():
         async with tx:
-            query = f"INSERT default::User {{first_name := <str>$first_name, last_name := <str>$last_name, is_logged_in := false}};"
+            query = f"INSERT default::User {{username := <str>$username, password := <str>$password, first_name := <str>$first_name, last_name := <str>$last_name, is_logged_in := false}};"
             return await tx.query_single_json(
                 query,
+                username=user.get("username"),
+                password=str(
+                    bcrypt.hashpw(
+                        user.get("password").encode("utf-8"), bcrypt.gensalt()
+                    )
+                ),
                 first_name=user.get("first_name"),
                 last_name=user.get("last_name"),
             )
+
+    await client.aclose()
 
 
 async def insert_message(message: dict):
@@ -45,6 +56,8 @@ async def insert_message(message: dict):
                 author=message.get("author"),
                 text=message.get("text"),
             )
+
+    await client.aclose()
 
 
 async def insert_discussion(discussion: dict):
@@ -64,6 +77,8 @@ async def insert_discussion(discussion: dict):
                 members=discussion.get("members"),
                 vacation=discussion.get("vacation"),
             )
+
+    await client.aclose()
 
 
 async def insert_vacation(discussion: dict):
@@ -99,3 +114,19 @@ async def insert_vacation(discussion: dict):
                 admin_user=discussion.get("admin_user"),
                 name=discussion.get("name"),
             )
+
+    await client.aclose()
+
+
+async def login(creds: dict):
+    client = create_client()
+    assert creds.get("username")
+
+    password_hash = await client.query(
+        f"SELECT default::User.password filter User.username = <str>$username",
+        username=creds.get("username"),
+    )
+    print(password_hash[0].__class__)
+    return bcrypt.checkpw(
+        bytes(creds["password"], "utf-8"), bytes(password_hash[0], "utf-8")
+    )
