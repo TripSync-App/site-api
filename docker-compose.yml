@@ -8,6 +8,8 @@ services:
       - "8000:8000"
     volumes:
       - ./src/site_api:/project/site_api
+    networks:
+      - "traveling"
 
 networks:
   traveling:

@@ -13,4 +13,4 @@ RUN pdm install --no-lock --no-editable -vv
 
 EXPOSE 8000
 
-ENTRYPOINT ["pdm", "run", "python", "-m", "uvicorn", "site_api.app:app", "--reload"]
+ENTRYPOINT ["pdm", "run", "python", "-m", "uvicorn", "site_api.app:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
