@@ -32,6 +32,21 @@ async def insert_user(user: dict):
             )
 
 
+async def insert_message(message: dict):
+    client = create_client()
+    assert message.get("author") and isinstance(message.get("author"), int)
+    assert message.get("text") and isinstance(message.get("text"), str)
+
+    async for tx in client.transaction():
+        async with tx:
+            query = f"INSERT default::Message {{text := <str>$text, author := (SELECT default::User filter .user_id = <int64>$author)}};"
+            return await tx.query_single_json(
+                query,
+                author=message.get("author"),
+                text=message.get("text"),
+            )
+
+
 async def insert_discussion(discussion: dict):
     client = create_client()
     assert discussion.get("title") and isinstance(discussion.get("title"), str)

@@ -11,5 +11,8 @@ async def get_messages():
 
 
 @message_router.post("/messages")
-async def make_messages():
-    ...
+async def make_messages(request: Request):
+    res = await request.json()
+    assert res.get("message")
+
+    return await dbf.insert_message(res.get("message"))
