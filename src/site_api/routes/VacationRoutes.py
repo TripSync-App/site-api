@@ -11,5 +11,8 @@ async def get_vacations():
 
 
 @vacation_router.post("/vacations")
-async def make_vacations():
-    ...
+async def make_vacations(request: Request):
+    res = await request.json()
+    assert res.get("vacation")
+
+    return await dbf.insert_vacation(res.get("vacation"))

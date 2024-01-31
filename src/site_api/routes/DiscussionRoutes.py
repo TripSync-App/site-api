@@ -11,5 +11,8 @@ async def get_discussions():
 
 
 @discussion_router.post("/discussions")
-async def make_discussions():
-    ...
+async def make_discussions(request: Request):
+    res = await request.json()
+    assert res.get("discussion")
+
+    return await dbf.insert_discussion(res.get("discussion"))

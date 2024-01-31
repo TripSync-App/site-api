@@ -1,3 +1,5 @@
+from typing import List, NewType
+
 import edgedb
 
 DB_HOST = "edgedb"
@@ -29,4 +31,58 @@ async def insert_user(user: dict):
                 query,
                 first_name=user.get("first_name"),
                 last_name=user.get("last_name"),
+            )
+
+
+async def insert_discussion(discussion: dict):
+    client = create_client()
+    assert discussion.get("title") and isinstance(discussion.get("title"), str)
+    assert discussion.get("members") and isinstance(
+        discussion.get("members"), list
+    )  # NOTE: list[int]
+    assert discussion.get("vacation") and isinstance(discussion.get("vacation"), int)
+
+    async for tx in client.transaction():
+        async with tx:
+            query = f"INSERT default::Discussion {{title := <str>$title, members := (SELECT default::User filter .user_id in array_unpack(<array<int64>>$members)), vacation := (SELECT default::Vacation filter .vacation_id = <int64>$vacation)}};"
+            return await tx.query_single_json(
+                query,
+                title=discussion.get("title"),
+                members=discussion.get("members"),
+                vacation=discussion.get("vacation"),
+            )
+
+
+async def insert_vacation(discussion: dict):
+    client = create_client()
+    assert discussion.get("admin_user") and isinstance(
+        discussion.get("admin_user"), int
+    )
+    assert discussion.get("name") and isinstance(discussion.get("name"), str)
+    assert discussion.get("discussions") and isinstance(
+        discussion.get("discussions"), list
+    )
+    assert discussion.get("members") and isinstance(discussion.get("members"), list)
+
+    DISCUSSIONS = ""
+    MEMBERS = ""
+
+    if discussion.get("discussions"):
+        DISCUSSIONS = f"discussions := (SELECT default::Discussion filter .discussion_id = array_unpack(<array<int64>>{discussion.get('discussions')})),"
+
+    if discussion.get("members"):
+        MEMBERS = f"members := (SELECT default::User filter .user_id = array_unpack(<array<int64>>{discussion.get('members')})),"
+
+    async for tx in client.transaction():
+        async with tx:
+            query = f"""
+            INSERT default::Vacation {{
+            admin_user := (SELECT default::User filter .user_id = <int64>$admin_user),
+            name := <str>$name,
+            {DISCUSSIONS} {MEMBERS}
+            }};"""
+            return await tx.query_single_json(
+                query,
+                admin_user=discussion.get("admin_user"),
+                name=discussion.get("name"),
             )
