@@ -1,5 +1,3 @@
-from typing import List, NewType
-
 import edgedb
 
 DB_HOST = "edgedb"
