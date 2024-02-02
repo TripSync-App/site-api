@@ -11,9 +11,15 @@ def create_client():
     )
 
 
-async def query(query: str) -> list:
+async def query(query_statement: str, query_single: bool = False) -> list | str:
     client = create_client()
-    res = await client.query(query)
+
+    query = client.query
+
+    if query_single:
+        query = client.query_single_json
+
+    res = await query(query_statement)
     await client.aclose()
     return res
 
