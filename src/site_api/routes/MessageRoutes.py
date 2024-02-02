@@ -10,7 +10,7 @@ message_router = APIRouter()
 @message_router.get("/messages")
 async def get_messages():
     return await dbf.query(
-        "SELECT default::Message {**, author: {first_name, last_name, id}};"
+        "SELECT default::Message {**, author: {username, first_name, last_name, id}};"
     )
 
 

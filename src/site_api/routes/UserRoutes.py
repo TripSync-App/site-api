@@ -37,6 +37,17 @@ async def login(request: Request):
     return JSONResponse({"message": "failure"}, 401)
 
 
+@user_router.post("/users/logout")
+async def logout(request: Request):
+    res = await request.json()
+    assert res.get("user")
+
+    if dbf.logout(res.get("user")):
+        return JSONResponse({"message": "success"})
+
+    return JSONResponse({"message": "failure"}, 500)
+
+
 @user_router.post("/users")
 async def make_users(request: Request):
     res = await request.json()

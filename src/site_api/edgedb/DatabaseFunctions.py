@@ -136,10 +136,25 @@ async def login(creds: dict):
 
     if bcrypt.checkpw(creds["password"].encode("utf-8"), password_hash[0]):
         await client.query(
-            f"UPDATE default::User filter User.username = <str>$username SET {{is_logged_in := True}}",
+            f"UPDATE default::User filter User.username = <str>$username SET {{is_logged_in := true}}",
             username=creds.get("username"),
         )
 
+        await client.aclose()
         return True
 
+    await client.aclose()
     return False
+
+
+async def logout(user: dict):
+    client = create_client()
+    assert user.get("username")
+
+    if client.query(
+        "UPDATE default::User filter .username = <str>$username SET {{is_logged_in := false}}",
+        username=user.get("username"),
+    ):
+        return True
+    else:
+        return False
