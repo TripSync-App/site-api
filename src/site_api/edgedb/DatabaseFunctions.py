@@ -134,4 +134,12 @@ async def login(creds: dict):
         username=creds.get("username"),
     )
 
-    return bcrypt.checkpw(creds["password"].encode("utf-8"), password_hash[0])
+    if bcrypt.checkpw(creds["password"].encode("utf-8"), password_hash[0]):
+        await client.query(
+            f"UPDATE default::User filter User.username = <str>$username SET {{is_logged_in := True}}",
+            username=creds.get("username"),
+        )
+
+        return True
+
+    return False

@@ -1,6 +1,7 @@
 import json
 
 from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
 
 from site_api.edgedb import DatabaseFunctions as dbf
 
@@ -30,7 +31,10 @@ async def login(request: Request):
     res = await request.json()
     assert res.get("credentials")
 
-    return await dbf.login(res.get("credentials"))
+    if await dbf.login(res.get("credentials")):
+        return JSONResponse({"message": "success"})
+
+    return JSONResponse({"message": "failure"}, 401)
 
 
 @user_router.post("/users")
