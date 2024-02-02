@@ -9,19 +9,20 @@ message_router = APIRouter()
 
 @message_router.get("/messages")
 async def get_messages():
-    return await dbf.query("SELECT default::Message {**};")
+    return await dbf.query(
+        "SELECT default::Message {**, author: {first_name, last_name, id}};"
+    )
 
 
 @message_router.get("/messages/{message_id}")
 async def get_individual_message(message_id: int):
     message = await dbf.query(
-        f"SELECT default::Message{{**}} FILTER .message_id = {message_id};",
+        f"SELECT default::Message{{**, author: {{first_name, last_name, username, id}}}} FILTER .message_id = {message_id};",
         query_single=True,
     )
 
     if isinstance(message, str):
         message = json.loads(message)
-        message["author"].pop("password")
 
     return message
 
