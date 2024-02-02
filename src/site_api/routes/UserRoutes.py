@@ -8,6 +8,14 @@ from site_api.edgedb import DatabaseFunctions as dbf
 user_router = APIRouter()
 
 
+@user_router.post("/users")
+async def make_users(request: Request):
+    res = await request.json()
+    assert res.get("user")
+
+    return await dbf.insert_user(res.get("user"))
+
+
 @user_router.get("/users")
 async def get_users():
     return await dbf.query("SELECT default::User{**};")
@@ -46,11 +54,3 @@ async def logout(request: Request):
         return JSONResponse({"message": "success"})
 
     return JSONResponse({"message": "failure"}, 500)
-
-
-@user_router.post("/users")
-async def make_users(request: Request):
-    res = await request.json()
-    assert res.get("user")
-
-    return await dbf.insert_user(res.get("user"))
