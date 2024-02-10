@@ -1,5 +1,11 @@
+from typing import List
+
 import bcrypt
 import edgedb
+from fastapi import HTTPException
+
+from site_api.routes.models.Models import (BaseTeam, BaseUser, IDUser, Team,
+                                           User, UserLogin)
 
 DB_HOST = "edgedb"
 DB_PORT = 5656
@@ -125,19 +131,18 @@ async def insert_vacation(discussion: dict):
     await client.aclose()
 
 
-async def login(creds: dict):
+async def login(user_login: UserLogin):
     client = create_client()
-    assert creds.get("username")
 
     password_hash = await client.query(
         f"SELECT default::User.password filter User.username = <str>$username",
-        username=creds.get("username"),
+        username=user_login.username,
     )
 
-    if bcrypt.checkpw(creds["password"].encode("utf-8"), password_hash[0]):
+    if bcrypt.checkpw(user_login.password.encode("utf-8"), password_hash[0]):
         await client.query(
             f"UPDATE default::User filter User.username = <str>$username SET {{is_logged_in := true}}",
-            username=creds.get("username"),
+            username=user_login.username,
         )
 
         await client.aclose()
@@ -147,14 +152,55 @@ async def login(creds: dict):
     return False
 
 
-async def logout(user: dict):
+async def logout(user: BaseUser):
     client = create_client()
-    assert user.get("username")
 
     if client.query(
         "UPDATE default::User filter .username = <str>$username SET {{is_logged_in := false}}",
-        username=user.get("username"),
+        username=user.username,
     ):
         return True
     else:
         return False
+
+
+async def create_team(team: Team, user: User):
+    client = create_client()
+
+    try:
+        _team = await client.query(
+            """
+            with team := (INSERT default::Team {
+                name := <str>$name,
+                admin_user := (SELECT default::User filter .username = <str>$username),
+                members := (SELECT default::User filter .username = <str>$username)
+                }) SELECT team {team_id, name};
+            """,
+            name=team.name,
+            username=user.username,
+        )
+
+    except Exception:
+        raise HTTPException(403, "Not allowed to create a team with the same name.")
+
+    await client.aclose()
+
+    return _team
+
+
+async def add_team_members(team: BaseTeam, users: List[IDUser]):
+    client = create_client()
+
+    _team = await client.query(
+        """
+        UPDATE default::Team filter .id = $id, SET {
+            members := (SELECT default::User filter .id in array_unpack(<array<int64>>$members))
+        }
+        """,
+        id=team.id,
+        members=[user.id for user in users],
+    )
+
+    await client.aclose()
+
+    return _team

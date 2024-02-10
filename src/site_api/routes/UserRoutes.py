@@ -1,9 +1,15 @@
 import json
+from datetime import timedelta
+from typing import Annotated
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
+from site_api.constants import ACCESS_TOKEN_EXPIRE_MINUTES
 from site_api.edgedb import DatabaseFunctions as dbf
+from site_api.routes.models.Models import BaseUser, User, UserLogin
+from site_api.routes.utils.LoginUtils import (create_access_token,
+                                              validate_user_token)
 
 user_router = APIRouter()
 
@@ -35,22 +41,23 @@ async def get_individual_user(user_id: int):
 
 
 @user_router.post("/users/login")
-async def login(request: Request):
-    res = await request.json()
-    assert res.get("credentials")
+async def login(user_login: UserLogin):
+    if await dbf.login(user_login):
+        expire_time = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        data = {"sub": user_login.username}
+        token = create_access_token(data, expires_delta=expire_time)
+        return {"access_token": token, "token_type": "Bearer"}
 
-    if await dbf.login(res.get("credentials")):
-        return JSONResponse({"message": "success"})
-
-    return JSONResponse({"message": "failure"}, 401)
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Incorrect username or password.",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 @user_router.post("/users/logout")
-async def logout(request: Request):
-    res = await request.json()
-    assert res.get("user")
-
-    if dbf.logout(res.get("user")):
+async def logout(user: Annotated[User, Depends(validate_user_token)]):
+    if dbf.logout(user):
         return JSONResponse({"message": "success"})
 
     return JSONResponse({"message": "failure"}, 500)
