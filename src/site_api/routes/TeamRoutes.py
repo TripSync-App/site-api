@@ -20,6 +20,9 @@ async def create_team(
 @team_router.post("/teams/add-users")
 async def add_users(
     add_team_members: AddTeamMembers,
-    current_user: Annotated[User, Depends(validate_user_token)],
+    _: Annotated[User, Depends(validate_user_token)],
 ):
-    print(add_team_members)
+    if _team := await dbf.add_team_members(
+        add_team_members.team, add_team_members.data
+    ):
+        return _team

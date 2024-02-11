@@ -193,12 +193,12 @@ async def add_team_members(team: BaseTeam, users: List[IDUser]):
 
     _team = await client.query(
         """
-        UPDATE default::Team filter .id = $id, SET {
-            members := (SELECT default::User filter .id in array_unpack(<array<int64>>$members))
-        }
+        with team := (UPDATE default::Team filter .team_id = <int64>$id SET {
+            members += (SELECT default::User filter .user_id in array_unpack(<array<int64>>$members))
+        }) SELECT team {team_id, name, members: {username, user_id}};
         """,
-        id=team.id,
-        members=[user.id for user in users],
+        id=team.team_id,
+        members=[user.user_id for user in users],
     )
 
     await client.aclose()
