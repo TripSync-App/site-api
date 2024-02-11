@@ -19,6 +19,12 @@ class User(BaseUser):
     ...
 
 
+class CreateUser(BaseUser):
+    first_name: str
+    last_name: str
+    password: str
+
+
 class BaseTeam(BaseModel):
     team_id: int
 

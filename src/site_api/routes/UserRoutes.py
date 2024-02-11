@@ -2,12 +2,12 @@ import json
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 
 from site_api.constants import ACCESS_TOKEN_EXPIRE_MINUTES
 from site_api.edgedb import DatabaseFunctions as dbf
-from site_api.routes.models.Models import BaseUser, User, UserLogin
+from site_api.routes.models.Models import CreateUser, User, UserLogin
 from site_api.routes.utils.LoginUtils import (create_access_token,
                                               validate_user_token)
 
@@ -15,29 +15,8 @@ user_router = APIRouter()
 
 
 @user_router.post("/users")
-async def make_users(request: Request):
-    res = await request.json()
-    assert res.get("user")
-
-    return await dbf.insert_user(res.get("user"))
-
-
-@user_router.get("/users")
-async def get_users():
-    return await dbf.query("SELECT default::User{**};")
-
-
-@user_router.get("/users/{user_id}")
-async def get_individual_user(user_id: int):
-    user = await dbf.query(
-        f"SELECT default::User{{**}} FILTER .user_id = {user_id};", query_single=True
-    )
-
-    if isinstance(user, str):
-        user = json.loads(user)
-        user.pop("password")
-
-    return user
+async def make_users(user: CreateUser):
+    return await dbf.insert_user(user)
 
 
 @user_router.post("/users/login")

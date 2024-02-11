@@ -4,8 +4,9 @@ import bcrypt
 import edgedb
 from fastapi import HTTPException
 
-from site_api.routes.models.Models import (BaseTeam, BaseUser, IDUser, Team,
-                                           User, UserLogin, Vacation)
+from site_api.routes.models.Models import (BaseTeam, BaseUser, CreateUser,
+                                           IDUser, Team, User, UserLogin,
+                                           Vacation)
 
 DB_HOST = "edgedb"
 DB_PORT = 5656
@@ -32,30 +33,29 @@ async def query(
     return res
 
 
-async def insert_user(user: dict):
+async def insert_user(user: CreateUser):
     client = create_client()
-    assert user.get("first_name")
-    assert user.get("last_name")
-    assert user.get("username")
-    assert user.get("password")
 
-    _bytes = user["password"].encode("utf-8")
+    _bytes = user.password.encode("utf-8")
     salt = bcrypt.gensalt()
 
     hash = bcrypt.hashpw(_bytes, salt)
 
-    async for tx in client.transaction():
-        async with tx:
-            query = f"INSERT default::User {{username := <str>$username, password := <bytes>$password, first_name := <str>$first_name, last_name := <str>$last_name, is_logged_in := false}};"
-            return await tx.query_single_json(
-                query,
-                username=user.get("username"),
-                password=hash,
-                first_name=user.get("first_name"),
-                last_name=user.get("last_name"),
-            )
+    try:
+        async for tx in client.transaction():
+            async with tx:
+                query = f"INSERT default::User {{username := <str>$username, password := <bytes>$password, first_name := <str>$first_name, last_name := <str>$last_name, is_logged_in := false}};"
+                return await tx.query_single_json(
+                    query,
+                    username=user.username,
+                    password=hash,
+                    first_name=user.first_name,
+                    last_name=user.last_name,
+                )
 
-    await client.aclose()
+        await client.aclose()
+    except edgedb.ConstraintViolationError:
+        raise HTTPException(403, "Username taken.")
 
 
 async def insert_message(message: dict):
@@ -176,11 +176,10 @@ async def create_team(team: Team, user: User):
             name=team.name,
             username=user.username,
         )
+        await client.aclose()
 
     except Exception:
         raise HTTPException(403, "Not allowed to create a team with the same name.")
-
-    await client.aclose()
 
     return _team
 
