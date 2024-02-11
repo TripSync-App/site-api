@@ -30,3 +30,12 @@ class Team(BaseModel):
 class AddTeamMembers(BaseModel):
     team: BaseTeam
     data: List[IDUser]
+
+
+class Vacation(BaseModel):
+    name: str
+
+
+class CreateVacation(BaseModel):
+    team: BaseTeam
+    vacation: Vacation

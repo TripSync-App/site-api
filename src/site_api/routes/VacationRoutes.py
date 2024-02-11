@@ -1,8 +1,11 @@
 import json
+from typing import Annotated
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 
 from site_api.edgedb import DatabaseFunctions as dbf
+from site_api.routes.models.Models import CreateVacation, User, Vacation
+from site_api.routes.utils.LoginUtils import validate_user_token
 
 vacation_router = APIRouter()
 
@@ -28,8 +31,10 @@ async def get_individual_vacation(vacation_id: int):
 
 
 @vacation_router.post("/vacations")
-async def make_vacations(request: Request):
-    res = await request.json()
-    assert res.get("vacation")
-
-    return await dbf.insert_vacation(res.get("vacation"))
+async def make_vacations(
+    create_vacation: CreateVacation,
+    current_user: Annotated[User, Depends(validate_user_token)],
+):
+    return await dbf.insert_vacation(
+        create_vacation.vacation, create_vacation.team, current_user
+    )

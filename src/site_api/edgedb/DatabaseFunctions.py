@@ -5,7 +5,7 @@ import edgedb
 from fastapi import HTTPException
 
 from site_api.routes.models.Models import (BaseTeam, BaseUser, IDUser, Team,
-                                           User, UserLogin)
+                                           User, UserLogin, Vacation)
 
 DB_HOST = "edgedb"
 DB_PORT = 5656
@@ -94,38 +94,29 @@ async def insert_discussion(discussion: dict):
     await client.aclose()
 
 
-async def insert_vacation(discussion: dict):
+async def insert_vacation(vacation: Vacation, team: BaseTeam, current_user: User):
     client = create_client()
-    assert discussion.get("admin_user") and isinstance(
-        discussion.get("admin_user"), int
-    )
-    assert discussion.get("name") and isinstance(discussion.get("name"), str)
-    assert discussion.get("discussions") and isinstance(
-        discussion.get("discussions"), list
-    )
-    assert discussion.get("members") and isinstance(discussion.get("members"), list)
-
-    DISCUSSIONS = ""
-    MEMBERS = ""
-
-    if discussion.get("discussions"):
-        DISCUSSIONS = f"discussions := (SELECT default::Discussion filter .discussion_id = array_unpack(<array<int64>>{discussion.get('discussions')})),"
-
-    if discussion.get("members"):
-        MEMBERS = f"members := (SELECT default::User filter .user_id = array_unpack(<array<int64>>{discussion.get('members')})),"
-
     async for tx in client.transaction():
         async with tx:
-            query = f"""
-            INSERT default::Vacation {{
-            admin_user := (SELECT default::User filter .user_id = <int64>$admin_user),
-            name := <str>$name,
-            {DISCUSSIONS} {MEMBERS}
-            }};"""
+            query = """
+            with
+            team := (SELECT default::Team filter .team_id = <int64>$team_id),
+            vacation := (
+                INSERT default::Vacation {
+                    admin_user := (SELECT default::User filter .username = <str>$username),
+                    name := <str>$name,
+                }
+            )
+            UPDATE team SET {
+                vacations += vacation
+            };
+            SELECT vacation {vacation_id, name};
+            """
             return await tx.query_single_json(
                 query,
-                admin_user=discussion.get("admin_user"),
-                name=discussion.get("name"),
+                team_id=team.team_id,
+                username=current_user.username,
+                name=vacation.name,
             )
 
     await client.aclose()
