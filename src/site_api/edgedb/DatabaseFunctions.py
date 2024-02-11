@@ -17,7 +17,9 @@ def create_client():
     )
 
 
-async def query(query_statement: str, query_single: bool = False) -> list | str:
+async def query(
+    query_statement: str, query_single: bool = False, **kwargs
+) -> list | str:
     client = create_client()
 
     query = client.query
@@ -25,7 +27,7 @@ async def query(query_statement: str, query_single: bool = False) -> list | str:
     if query_single:
         query = client.query_single_json
 
-    res = await query(query_statement)
+    res = await query(query_statement, **kwargs)
     await client.aclose()
     return res
 
@@ -96,30 +98,34 @@ async def insert_discussion(discussion: dict):
 
 async def insert_vacation(vacation: Vacation, team: BaseTeam, current_user: User):
     client = create_client()
-    async for tx in client.transaction():
-        async with tx:
-            query = """
-            with
-            team := (SELECT default::Team filter .team_id = <int64>$team_id),
-            vacation := (
-                INSERT default::Vacation {
-                    admin_user := (SELECT default::User filter .username = <str>$username),
-                    name := <str>$name,
-                }
-            )
-            UPDATE team SET {
-                vacations += vacation
-            };
-            SELECT vacation {vacation_id, name};
-            """
-            return await tx.query_single_json(
-                query,
-                team_id=team.team_id,
-                username=current_user.username,
-                name=vacation.name,
-            )
-
-    await client.aclose()
+    try:
+        async for tx in client.transaction():
+            async with tx:
+                query = """
+                with
+                team := (SELECT default::Team filter .team_id = <int64>$team_id),
+                vacation := (
+                    INSERT default::Vacation {
+                        admin_user := (SELECT default::User filter .username = <str>$username),
+                        name := <str>$name,
+                    }
+                )
+                UPDATE team SET {
+                    vacations += vacation
+                };
+                SELECT default::Vacation {vacation_id, name}
+                filter .name = <str>$name and
+                .admin_user = (SELECT default::User filter .username = <str>$username);
+                """
+                await client.aclose()
+                return await tx.query_single_json(
+                    query,
+                    team_id=team.team_id,
+                    username=current_user.username,
+                    name=vacation.name,
+                )
+    except edgedb.ConstraintViolationError:
+        raise HTTPException(403, "Can't have two vacations with the same name.")
 
 
 async def login(user_login: UserLogin):

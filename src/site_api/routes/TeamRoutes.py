@@ -9,6 +9,34 @@ from site_api.routes.utils.LoginUtils import validate_user_token
 team_router = APIRouter()
 
 
+@team_router.get("/teams/owned")
+async def get_owned_teams(current_user: Annotated[User, Depends(validate_user_token)]):
+    return {
+        "teams": await dbf.query(
+            """
+        SELECT default::Team {*} filter .admin_user.username = <str>$username;
+        """,
+            username=current_user.username,
+        )
+    }
+
+
+@team_router.get("/teams/member")
+async def get_membered_teams(
+    current_user: Annotated[User, Depends(validate_user_token)]
+):
+    return {
+        "teams": await dbf.query(
+            """
+        SELECT default::Team {*} filter
+        .admin_user.username != <str>$username and
+        .members.username in array_unpack(<array<str>>[<str>$username]);
+        """,
+            username=current_user.username,
+        )
+    }
+
+
 @team_router.post("/teams")
 async def create_team(
     team: Team, current_user: Annotated[User, Depends(validate_user_token)]
