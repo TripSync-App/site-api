@@ -19,7 +19,7 @@ async def make_users(user: CreateUser):
     return await dbf.insert_user(user)
 
 
-@user_router.post("/users/login")
+@user_router.post("/login")
 async def login(user_login: UserLogin):
     if await dbf.login(user_login):
         expire_time = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -34,7 +34,7 @@ async def login(user_login: UserLogin):
     )
 
 
-@user_router.post("/users/logout")
+@user_router.post("/logout")
 async def logout(user: Annotated[User, Depends(validate_user_token)]):
     if dbf.logout(user):
         return JSONResponse({"message": "success"})

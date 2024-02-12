@@ -2,7 +2,7 @@ from typing import List
 
 import bcrypt
 import edgedb
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 from site_api.routes.models.Models import (BaseTeam, BaseUser, CreateUser,
                                            IDUser, Team, User, UserLogin,
@@ -135,6 +135,13 @@ async def login(user_login: UserLogin):
         f"SELECT default::User.password filter User.username = <str>$username",
         username=user_login.username,
     )
+
+    if not password_hash:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     if bcrypt.checkpw(user_login.password.encode("utf-8"), password_hash[0]):
         await client.query(
