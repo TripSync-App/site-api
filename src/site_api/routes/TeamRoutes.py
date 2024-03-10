@@ -11,14 +11,15 @@ team_router = APIRouter()
 
 @team_router.get("/teams/owned")
 async def get_owned_teams(current_user: Annotated[User, Depends(validate_user_token)]):
-    return {
+    teams = {
         "teams": await dbf.query(
             """
-        SELECT default::Team {*} filter .admin_user.username = <str>$username;
+        SELECT default::Team {*, admin_user: {username}, vacations: {**}, discussions: {**}, members: {user_id, username, first_name, last_name}} filter .admin_user.username = <str>$username;
         """,
             username=current_user.username,
         )
     }
+    return teams
 
 
 @team_router.get("/teams/member")

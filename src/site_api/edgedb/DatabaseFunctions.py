@@ -144,13 +144,13 @@ async def login(user_login: UserLogin):
         )
 
     if bcrypt.checkpw(user_login.password.encode("utf-8"), password_hash[0]):
-        await client.query(
-            f"UPDATE default::User filter User.username = <str>$username SET {{is_logged_in := true}}",
+        user = await client.query(
+            f"SELECT default::User {{teams: {{**}}, user_id, username, first_name, last_name}} filter User.username = <str>$username",
             username=user_login.username,
         )
 
         await client.aclose()
-        return True
+        return user
 
     await client.aclose()
     return False

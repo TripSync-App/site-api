@@ -21,11 +21,12 @@ async def make_users(user: CreateUser):
 
 @user_router.post("/login")
 async def login(user_login: UserLogin):
-    if await dbf.login(user_login):
+    if user := await dbf.login(user_login):
+        print(user)
         expire_time = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         data = {"sub": user_login.username}
         token = create_access_token(data, expires_delta=expire_time)
-        return {"access_token": token, "token_type": "Bearer"}
+        return {"access_token": token, "token_type": "Bearer", "userData": user[0]}
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
