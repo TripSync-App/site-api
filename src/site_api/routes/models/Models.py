@@ -15,8 +15,7 @@ class IDUser(BaseModel):
     user_id: int
 
 
-class User(BaseUser):
-    ...
+class User(BaseUser): ...
 
 
 class CreateUser(BaseUser):
@@ -36,6 +35,11 @@ class Team(BaseModel):
 class AddTeamMembers(BaseModel):
     team: BaseTeam
     data: List[IDUser]
+
+
+class RemoveTeamMember(BaseModel):
+    team: BaseTeam
+    user: BaseUser
 
 
 class Vacation(BaseModel):

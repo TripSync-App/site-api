@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from site_api.edgedb import DatabaseFunctions as dbf
-from site_api.routes.models.Models import AddTeamMembers, Team, User
+from site_api.routes.models.Models import AddTeamMembers, RemoveTeamMember, Team, User
 from site_api.routes.utils.LoginUtils import validate_user_token
 
 team_router = APIRouter()
@@ -24,7 +24,7 @@ async def get_owned_teams(current_user: Annotated[User, Depends(validate_user_to
 
 @team_router.get("/teams/member")
 async def get_membered_teams(
-    current_user: Annotated[User, Depends(validate_user_token)]
+    current_user: Annotated[User, Depends(validate_user_token)],
 ):
     return {
         "teams": await dbf.query(
@@ -53,5 +53,16 @@ async def add_users(
 ):
     if _team := await dbf.add_team_members(
         add_team_members.team, add_team_members.data
+    ):
+        return _team
+
+
+@team_router.post("/teams/remove-user")
+async def remove_user(
+    remove_team_members: RemoveTeamMember,
+    _: Annotated[User, Depends(validate_user_token)],
+):
+    if _team := await dbf.remove_team_member(
+        remove_team_members.team, remove_team_members.user
     ):
         return _team

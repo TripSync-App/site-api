@@ -4,9 +4,16 @@ import bcrypt
 import edgedb
 from fastapi import HTTPException, status
 
-from site_api.routes.models.Models import (BaseTeam, BaseUser, CreateUser,
-                                           IDUser, Team, User, UserLogin,
-                                           Vacation)
+from site_api.routes.models.Models import (
+    BaseTeam,
+    BaseUser,
+    CreateUser,
+    IDUser,
+    Team,
+    User,
+    UserLogin,
+    Vacation,
+)
 
 DB_HOST = "edgedb"
 DB_PORT = 5656
@@ -202,6 +209,24 @@ async def add_team_members(team: BaseTeam, users: List[IDUser]):
         """,
         id=team.team_id,
         members=[user.user_id for user in users],
+    )
+
+    await client.aclose()
+
+    return _team
+
+
+async def remove_team_member(team: BaseTeam, user: BaseUser):
+    client = create_client()
+
+    _team = await client.query(
+        """
+        with team := (UPDATE default::Team filter .team_id = <int64>$id SET {
+            members -= (SELECT default::User filter .username = <str>$member)
+        }) SELECT team {team_id, name, members: {username, user_id}};
+        """,
+        id=team.team_id,
+        member=user.username,
     )
 
     await client.aclose()
