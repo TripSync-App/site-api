@@ -9,6 +9,7 @@ from site_api.routes.models.Models import (
     BaseUser,
     CreateUser,
     IDUser,
+    InviteCode,
     Team,
     User,
     UserLogin,
@@ -265,7 +266,7 @@ async def get_invite(team: BaseTeam):
         SELECT default::Team {
         invite: {
             code
-        }
+            }
         }
         FILTER .team_id = <int64>$team;
         """,
@@ -274,3 +275,33 @@ async def get_invite(team: BaseTeam):
 
     await client.aclose()
     return _code
+
+async def redeem_invite(code: InviteCode, user):
+    print(user)
+    client = create_client()
+
+    invite = await client.query_single(
+        """
+        SELECT default::Invite {
+        team: {
+            team_id
+        }
+        }
+        FILTER .code = <str>$code;
+        """,
+        code=code.code,
+    )
+
+    team_id = invite.team.team_id
+
+    await client.query(
+        """
+        with team := (UPDATE default::Team filter .team_id = <int64>$id SET {
+            members += (SELECT default::User filter .username = <str>$username)
+        }) SELECT team {team_id, name, members: {username, user_id}};
+        """,
+        id=team_id,
+        username=user
+    )
+
+    await client.aclose()

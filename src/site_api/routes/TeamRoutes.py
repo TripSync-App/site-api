@@ -6,6 +6,7 @@ from site_api.edgedb import DatabaseFunctions as dbf
 from site_api.routes.models.Models import (
     AddTeamMembers,
     BaseTeam,
+    InviteCode,
     RemoveTeamMember,
     Team,
     User,
@@ -84,7 +85,6 @@ async def create_invite(
     if _team := await dbf.create_invite(team=team, code=code):
         return _team
 
-
 @team_router.post("/teams/get-invite")
 async def get_invite(
     team: BaseTeam,
@@ -99,3 +99,12 @@ async def get_invite(
         return {"invite_link": invite_link}
     else:
         return {"error": "Invite code not found"}, 404
+
+@team_router.post("/teams/redeem-invite")
+async def redeem_invite(
+    code: InviteCode,
+    request: Request,
+    user: Annotated[User, Depends(validate_user_token)],
+):
+    invite_code = await dbf.redeem_invite(code, user.username)
+

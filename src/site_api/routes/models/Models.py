@@ -49,3 +49,6 @@ class Vacation(BaseModel):
 class CreateVacation(BaseModel):
     team: BaseTeam
     vacation: Vacation
+
+class InviteCode(BaseModel):
+    code: str
