@@ -1,10 +1,17 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 
 from site_api.edgedb import DatabaseFunctions as dbf
-from site_api.routes.models.Models import AddTeamMembers, RemoveTeamMember, Team, User
+from site_api.routes.models.Models import (
+    AddTeamMembers,
+    BaseTeam,
+    RemoveTeamMember,
+    Team,
+    User,
+)
 from site_api.routes.utils.LoginUtils import validate_user_token
+from site_api.utils import generate_invite_code
 
 team_router = APIRouter()
 
@@ -66,3 +73,29 @@ async def remove_user(
         remove_team_members.team, remove_team_members.user
     ):
         return _team
+
+
+@team_router.post("/teams/create-invite")
+async def create_invite(
+    team: BaseTeam,
+    _: Annotated[User, Depends(validate_user_token)],
+):
+    code = generate_invite_code()
+    if _team := await dbf.create_invite(team=team, code=code):
+        return _team
+
+
+@team_router.post("/teams/get-invite")
+async def get_invite(
+    team: BaseTeam,
+    request: Request,
+    _: Annotated[User, Depends(validate_user_token)],
+):
+    invite_code = await dbf.get_invite(team=team)
+    if invite_code:
+        invite_link = (
+            f"{request.headers.get("Referer")}invite/{invite_code.invite.code}"
+        )
+        return {"invite_link": invite_link}
+    else:
+        return {"error": "Invite code not found"}, 404

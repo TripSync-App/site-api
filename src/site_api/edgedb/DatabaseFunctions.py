@@ -232,3 +232,45 @@ async def remove_team_member(team: BaseTeam, user: BaseUser):
     await client.aclose()
 
     return _team
+
+
+async def create_invite(team: BaseTeam, code: str):
+    client = create_client()
+
+    _code = await client.query(
+        """
+        WITH
+        code := (
+            INSERT default::Invite {
+            code := <str>$code,
+            }
+        )
+        UPDATE default::Team
+        FILTER .team_id = <int64>$team
+        SET { invite := code };
+        """,
+        team=team.team_id,
+        code=code,
+    )
+
+    await client.aclose()
+    return _code
+
+
+async def get_invite(team: BaseTeam):
+    client = create_client()
+
+    _code = await client.query_single(
+        """
+        SELECT default::Team {
+        invite: {
+            code
+        }
+        }
+        FILTER .team_id = <int64>$team;
+        """,
+        team=team.team_id,
+    )
+
+    await client.aclose()
+    return _code
