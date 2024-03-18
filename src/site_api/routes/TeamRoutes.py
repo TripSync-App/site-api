@@ -3,14 +3,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Request
 
 from site_api.edgedb import DatabaseFunctions as dbf
-from site_api.routes.models.Models import (
-    AddTeamMembers,
-    BaseTeam,
-    InviteCode,
-    RemoveTeamMember,
-    Team,
-    User,
-)
+from site_api.routes.models.Models import (AddTeamMembers, BaseTeam,
+                                           InviteCode, RemoveTeamMember, Team,
+                                           User)
 from site_api.routes.utils.LoginUtils import validate_user_token
 from site_api.utils import generate_invite_code
 
@@ -37,7 +32,7 @@ async def get_membered_teams(
     return {
         "teams": await dbf.query(
             """
-        SELECT default::Team {*} filter
+        SELECT default::Team {*, admin_user: {username, first_name, last_name}, members: {first_name, last_name}} filter
         .admin_user.username != <str>$username and
         .members.username in array_unpack(<array<str>>[<str>$username]);
         """,
@@ -85,6 +80,7 @@ async def create_invite(
     if _team := await dbf.create_invite(team=team, code=code):
         return _team
 
+
 @team_router.post("/teams/get-invite")
 async def get_invite(
     team: BaseTeam,
@@ -100,6 +96,7 @@ async def get_invite(
     else:
         return {"error": "Invite code not found"}, 404
 
+
 @team_router.post("/teams/redeem-invite")
 async def redeem_invite(
     code: InviteCode,
@@ -107,4 +104,3 @@ async def redeem_invite(
     user: Annotated[User, Depends(validate_user_token)],
 ):
     invite_code = await dbf.redeem_invite(code, user.username)
-
