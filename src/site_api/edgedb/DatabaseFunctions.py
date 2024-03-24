@@ -4,17 +4,9 @@ import bcrypt
 import edgedb
 from fastapi import HTTPException, status
 
-from site_api.routes.models.Models import (
-    BaseTeam,
-    BaseUser,
-    CreateUser,
-    IDUser,
-    InviteCode,
-    Team,
-    User,
-    UserLogin,
-    Vacation,
-)
+from site_api.routes.models.Models import (BaseTeam, BaseUser, CreateUser,
+                                           IDUser, InviteCode, Team, User,
+                                           UserLogin, Vacation)
 
 DB_HOST = "edgedb"
 DB_PORT = 5656
@@ -276,8 +268,8 @@ async def get_invite(team: BaseTeam):
     await client.aclose()
     return _code
 
+
 async def redeem_invite(code: InviteCode, user):
-    print(user)
     client = create_client()
 
     invite = await client.query_single(
@@ -301,7 +293,7 @@ async def redeem_invite(code: InviteCode, user):
         }) SELECT team {team_id, name, members: {username, user_id}};
         """,
         id=team_id,
-        username=user
+        username=user,
     )
 
     await client.aclose()
