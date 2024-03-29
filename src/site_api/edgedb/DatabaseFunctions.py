@@ -177,7 +177,6 @@ async def create_team(team: Team, user: User):
             with team := (INSERT default::Team {
                 name := <str>$name,
                 admin_user := (SELECT default::User filter .username = <str>$username),
-                members := (SELECT default::User filter .username = <str>$username)
                 }) SELECT team {team_id, name};
             """,
             name=team.name,
