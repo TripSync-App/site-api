@@ -63,10 +63,10 @@ async def add_users(
 @team_router.post("/teams/remove-user")
 async def remove_user(
     remove_team_members: RemoveTeamMember,
-    _: Annotated[User, Depends(validate_user_token)],
+    user: Annotated[User, Depends(validate_user_token)],
 ):
     if _team := await dbf.remove_team_member(
-        remove_team_members.team, remove_team_members.user
+        remove_team_members.team, user
     ):
         return _team
 

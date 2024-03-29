@@ -39,7 +39,6 @@ class AddTeamMembers(BaseModel):
 
 class RemoveTeamMember(BaseModel):
     team: BaseTeam
-    user: BaseUser
 
 
 class Vacation(BaseModel):
@@ -49,6 +48,7 @@ class Vacation(BaseModel):
 class CreateVacation(BaseModel):
     team: BaseTeam
     vacation: Vacation
+
 
 class InviteCode(BaseModel):
     code: str
