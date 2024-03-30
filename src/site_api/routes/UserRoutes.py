@@ -32,6 +32,11 @@ async def get_pfp(user: Annotated[User, Depends(validate_user_token)]):
     return retrieve_pfp(user.username)
 
 
+@user_router.get("/users/pfp/{username}")
+async def get_user_pfp(username: str, _: Annotated[User, Depends(validate_user_token)]):
+    return retrieve_pfp(username)
+
+
 @user_router.post("/login")
 async def login(user_login: UserLogin):
     if user := await dbf.login(user_login):

@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 import bcrypt
@@ -8,13 +9,15 @@ from site_api.routes.models.Models import (BaseTeam, BaseUser, CreateUser,
                                            IDUser, InviteCode, Team, User,
                                            UserLogin, Vacation)
 
+LOG = logging.getLogger(__name__)
+
 DB_HOST = "edgedb"
 DB_PORT = 5656
 
 
 def create_client():
     return edgedb.create_async_client(
-        host=DB_HOST, port=DB_PORT, tls_security="insecure"
+        dsn="edgedb://edgedb:edgedb@edgedb:5656", tls_security="insecure"
     )
 
 
@@ -177,6 +180,7 @@ async def create_team(team: Team, user: User):
             with team := (INSERT default::Team {
                 name := <str>$name,
                 admin_user := (SELECT default::User filter .username = <str>$username),
+                members := {},
                 }) SELECT team {team_id, name};
             """,
             name=team.name,
@@ -184,7 +188,8 @@ async def create_team(team: Team, user: User):
         )
         await client.aclose()
 
-    except Exception:
+    except Exception as e:
+        LOG.error(f"Error: {e}")
         raise HTTPException(403, "Not allowed to create a team with the same name.")
 
     return _team

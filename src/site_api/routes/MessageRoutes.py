@@ -1,16 +1,46 @@
 import json
+from typing import Annotated
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 
 from site_api.edgedb import DatabaseFunctions as dbf
+from site_api.routes.models.Models import User
+from site_api.routes.utils.LoginUtils import validate_user_token
 
 message_router = APIRouter()
 
 
 @message_router.get("/messages")
-async def get_messages():
+async def get_messages(current_user: Annotated[User, Depends(validate_user_token)]):
     return await dbf.query(
-        "SELECT default::Message {**, author: {username, first_name, last_name, id}};"
+        """
+        SELECT default::Message {
+        text,
+        timestamp,
+        discussion: {title},
+        vacation := (select .discussion.vacation {name}),
+        author: {username, first_name, last_name},
+        } filter .author.username = <str>$username order by .timestamp desc;
+        """,
+        username=current_user.username,
+    )
+
+
+@message_router.get("/messages/team")
+async def get_team_messages(
+    current_user: Annotated[User, Depends(validate_user_token)]
+):
+    return await dbf.query(
+        """
+        SELECT default::Message {
+        text,
+        timestamp,
+        discussion: {title},
+        vacation := (select .discussion.vacation {name}),
+        author: {username, first_name, last_name},
+        } filter .author.username != <str>$username and <str>$username in .vacation.members.username order by .timestamp desc;
+        """,
+        username=current_user.username,
     )
 
 
