@@ -52,3 +52,7 @@ class CreateVacation(BaseModel):
 
 class InviteCode(BaseModel):
     code: str
+
+
+class Discussion(BaseModel):
+    discussion_id: int

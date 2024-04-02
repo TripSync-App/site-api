@@ -1,14 +1,14 @@
 import json
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import (APIRouter, Depends, File, HTTPException, Request,
+                     UploadFile, status)
 
 from site_api.edgedb import DatabaseFunctions as dbf
-from site_api.routes.models.Models import (AddTeamMembers, BaseTeam,
-                                           InviteCode, RemoveTeamMember, Team,
-                                           User)
+from site_api.routes.models.Models import Discussion, User
 from site_api.routes.utils.LoginUtils import validate_user_token
-from site_api.utils import generate_invite_code
+from site_api.utils import (generate_invite_code, retrieve_thumbnail,
+                            upload_thumbnail_image)
 
 discussion_router = APIRouter()
 
@@ -36,6 +36,22 @@ async def get_individual_discussion(
         discussion = json.loads(discussion)
 
     return {"discussion": discussion}
+
+
+@discussion_router.post("/api/discussions/upload-thumbnail")
+async def upload_thumbnail(
+    _: Annotated[User, Depends(validate_user_token)],
+    discussion: Discussion,
+    image: UploadFile = File(...),
+):
+    upload_thumbnail_image(discussion.discussion_id, image)
+
+
+@discussion_router.get("/api/discussions/thumbnail/{id}")
+async def get_thumbnail(
+    discussion: Discussion, _: Annotated[User, Depends(validate_user_token)]
+):
+    return retrieve_thumbnail(discussion.discussion_id)
 
 
 @discussion_router.post("/api/discussions")

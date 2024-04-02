@@ -49,3 +49,40 @@ def retrieve_pfp(username):
         return Response(content=grid_out.read(), media_type="image/jpeg")
     else:
         return Response(content=b"", media_type="image/jpeg")
+
+
+def upload_thumbnail_image(discussion, image):
+    client = create_client()
+
+    db = client["thumbnails"]
+    fs = GridFS(db)
+
+    file_id = fs.put(image.file, filename=image.filename)
+
+    discussion_to_thumbnail = {"discussion": discussion, "image_id": file_id}
+    dtt_collection = db["discussion_to_thumbnail"]
+    dtt_collection.insert_one(discussion_to_thumbnail)
+
+    client.close()
+
+    return {"message": "Thumbnail uploaded!"}
+
+
+def retrieve_thumbnail(discussion):
+    client = create_client()
+
+    db = client["thumbnails"]
+    fs = GridFS(db)
+    discussion_to_thumbnail = db["discussion_to_thumbnail"]
+    documents = (
+        discussion_to_thumbnail.find({"discussion": discussion})
+        .sort("_id", -1)
+        .limit(1)
+    )
+    document = next(documents, None)
+    if document:
+        image_id = document["image_id"]
+        grid_out = fs.get(ObjectId(image_id))
+        return Response(content=grid_out.read(), media_type="image/jpeg")
+    else:
+        return Response(content=b"", media_type="image/jpeg")
