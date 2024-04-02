@@ -10,21 +10,21 @@ from site_api.routes.utils.LoginUtils import validate_user_token
 vacation_router = APIRouter()
 
 
-@vacation_router.get("/vacations")
+@vacation_router.get("/api/vacations")
 async def get_vacations(current_user: Annotated[User, Depends(validate_user_token)]):
     return await dbf.query(
         """
         SELECT default::Vacation {**, members: {username, first_name, last_name, id}}
-        filter .admin_user.username = <str>$username;
+        filter <str>$username in .members.username OR .admin_user.username = <str>$username;
         """,
         username=current_user.username,
     )
 
 
-@vacation_router.get("/vacations/{vacation_id}")
+@vacation_router.get("/api/vacations/{vacation_id}")
 async def get_individual_vacation(vacation_id: int):
     vacation = await dbf.query(
-        f"SELECT default::Vacation{{**, members: {{first_name, last_name, username, id}}}} FILTER .vacation_id = {vacation_id};",
+        f"SELECT default::Vacation{{**, members: {{first_name, last_name, username, id}}}} FILTER .vacation_id = <int64>{vacation_id};",
         query_single=True,
     )
 
@@ -34,7 +34,7 @@ async def get_individual_vacation(vacation_id: int):
     return vacation
 
 
-@vacation_router.post("/vacations")
+@vacation_router.post("/api/vacations")
 async def make_vacations(
     create_vacation: CreateVacation,
     current_user: Annotated[User, Depends(validate_user_token)],
