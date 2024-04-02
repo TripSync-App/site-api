@@ -10,7 +10,7 @@ from site_api.routes.utils.LoginUtils import validate_user_token
 message_router = APIRouter()
 
 
-@message_router.get("/messages")
+@message_router.get("/api/messages")
 async def get_messages(current_user: Annotated[User, Depends(validate_user_token)]):
     return await dbf.query(
         """
@@ -26,7 +26,7 @@ async def get_messages(current_user: Annotated[User, Depends(validate_user_token
     )
 
 
-@message_router.get("/messages/team")
+@message_router.get("/api/messages/team")
 async def get_team_messages(
     current_user: Annotated[User, Depends(validate_user_token)]
 ):
@@ -44,7 +44,7 @@ async def get_team_messages(
     )
 
 
-@message_router.get("/messages/{message_id}")
+@message_router.get("/api/messages/{message_id}")
 async def get_individual_message(message_id: int):
     message = await dbf.query(
         f"SELECT default::Message{{**, author: {{first_name, last_name, username, id}}}} FILTER .message_id = {message_id};",
@@ -57,7 +57,7 @@ async def get_individual_message(message_id: int):
     return message
 
 
-@message_router.post("/messages")
+@message_router.post("/api/messages")
 async def make_messages(request: Request):
     res = await request.json()
     assert res.get("message")

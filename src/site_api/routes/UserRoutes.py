@@ -15,29 +15,29 @@ from site_api.utils import retrieve_pfp, upload_profile_picture
 user_router = APIRouter()
 
 
-@user_router.post("/users")
+@user_router.post("/api/users")
 async def make_users(user: CreateUser):
     return await dbf.insert_user(user)
 
 
-@user_router.post("/users/upload-pfp")
+@user_router.post("/api/users/upload-pfp")
 async def upload_pfp(
     user: Annotated[User, Depends(validate_user_token)], image: UploadFile = File(...)
 ):
     upload_profile_picture(user.username, image)
 
 
-@user_router.get("/users/pfp")
+@user_router.get("/api/users/pfp")
 async def get_pfp(user: Annotated[User, Depends(validate_user_token)]):
     return retrieve_pfp(user.username)
 
 
-@user_router.get("/users/pfp/{username}")
+@user_router.get("/api/users/pfp/{username}")
 async def get_user_pfp(username: str, _: Annotated[User, Depends(validate_user_token)]):
     return retrieve_pfp(username)
 
 
-@user_router.post("/login")
+@user_router.post("/api/login")
 async def login(user_login: UserLogin):
     if user := await dbf.login(user_login):
         expire_time = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -50,11 +50,3 @@ async def login(user_login: UserLogin):
         detail="Incorrect username or password.",
         headers={"WWW-Authenticate": "Bearer"},
     )
-
-
-@user_router.post("/logout")
-async def logout(user: Annotated[User, Depends(validate_user_token)]):
-    if dbf.logout(user):
-        return JSONResponse({"message": "success"})
-
-    return JSONResponse({"message": "failure"}, 500)

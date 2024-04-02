@@ -13,7 +13,7 @@ from site_api.utils import generate_invite_code
 discussion_router = APIRouter()
 
 
-@discussion_router.get("/discussions")
+@discussion_router.get("/api/discussions")
 async def get_discussions(current_user: Annotated[User, Depends(validate_user_token)]):
     return await dbf.query(
         "SELECT default::Discussion {*, members: {username, first_name, last_name, id}} filter <str>$username in .members.username;",
@@ -21,12 +21,12 @@ async def get_discussions(current_user: Annotated[User, Depends(validate_user_to
     )
 
 
-@discussion_router.get("/discussions/{discussion_id}")
+@discussion_router.get("/api/discussions/{discussion_id}")
 async def get_individual_discussion(
     discussion_id: int, current_user: Annotated[User, Depends(validate_user_token)]
 ):
     discussion = await dbf.query(
-        "SELECT default::Discussion {**, members: {first_name, last_name, username, id}} FILTER .discussion_id = $discussion_id and $username in .members.username;",
+        "SELECT default::Discussion {**, members: {first_name, last_name, username, id}} FILTER .discussion_id = <int64>$discussion_id and <str>$username in .members.username;",
         query_single=True,
         username=current_user.username,
         discussion_id=discussion_id,
@@ -35,10 +35,10 @@ async def get_individual_discussion(
     if isinstance(discussion, str):
         discussion = json.loads(discussion)
 
-    return discussion
+    return {"discussion": discussion}
 
 
-@discussion_router.post("/discussions")
+@discussion_router.post("/api/discussions")
 async def make_discussions(request: Request):
     res = await request.json()
     assert res.get("discussion")

@@ -12,7 +12,7 @@ from site_api.utils import generate_invite_code
 team_router = APIRouter()
 
 
-@team_router.get("/teams/owned")
+@team_router.get("/api/teams/owned")
 async def get_owned_teams(current_user: Annotated[User, Depends(validate_user_token)]):
     teams = {
         "teams": await dbf.query(
@@ -25,7 +25,7 @@ async def get_owned_teams(current_user: Annotated[User, Depends(validate_user_to
     return teams
 
 
-@team_router.get("/teams/member")
+@team_router.get("/api/teams/member")
 async def get_membered_teams(
     current_user: Annotated[User, Depends(validate_user_token)],
 ):
@@ -41,7 +41,7 @@ async def get_membered_teams(
     }
 
 
-@team_router.post("/teams")
+@team_router.post("/api/teams")
 async def create_team(
     team: Team, current_user: Annotated[User, Depends(validate_user_token)]
 ):
@@ -49,7 +49,7 @@ async def create_team(
         return _team
 
 
-@team_router.post("/teams/add-users")
+@team_router.post("/api/teams/add-users")
 async def add_users(
     add_team_members: AddTeamMembers,
     _: Annotated[User, Depends(validate_user_token)],
@@ -60,7 +60,7 @@ async def add_users(
         return _team
 
 
-@team_router.post("/teams/remove-user")
+@team_router.post("/api/teams/remove-user")
 async def remove_user(
     remove_team_members: RemoveTeamMember,
     user: Annotated[User, Depends(validate_user_token)],
@@ -71,7 +71,7 @@ async def remove_user(
         return _team
 
 
-@team_router.post("/teams/create-invite")
+@team_router.post("/api/teams/create-invite")
 async def create_invite(
     team: BaseTeam,
     _: Annotated[User, Depends(validate_user_token)],
@@ -81,7 +81,7 @@ async def create_invite(
         return _team
 
 
-@team_router.post("/teams/get-invite")
+@team_router.post("/api/teams/get-invite")
 async def get_invite(
     team: BaseTeam,
     request: Request,
@@ -97,7 +97,7 @@ async def get_invite(
         return {"error": "Invite code not found"}, 404
 
 
-@team_router.post("/teams/redeem-invite")
+@team_router.post("/api/teams/redeem-invite")
 async def redeem_invite(
     code: InviteCode,
     request: Request,
