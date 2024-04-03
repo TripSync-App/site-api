@@ -104,3 +104,10 @@ async def redeem_invite(
     user: Annotated[User, Depends(validate_user_token)],
 ):
     invite_code = await dbf.redeem_invite(code, user.username)
+
+@team_router.post("/api/teams/delete")
+async def delete_teams(
+    team: BaseTeam,
+    user: Annotated[User, Depends(validate_user_token)],
+):
+    await dbf.delete_team(team.team_id)

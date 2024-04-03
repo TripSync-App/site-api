@@ -331,3 +331,17 @@ async def delete_user(username: str):
 
     await client.aclose()
     return delete
+
+
+async def delete_team(team_id: int):
+    client = create_client()
+
+    delete = await client.query_single(
+        """
+        DELETE default::Team filter .team_id = <int64>$team_id;
+        """,
+        team_id=team_id,
+    )
+
+    await client.aclose()
+    return delete
