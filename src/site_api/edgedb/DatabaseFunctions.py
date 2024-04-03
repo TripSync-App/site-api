@@ -301,3 +301,33 @@ async def redeem_invite(code: InviteCode, user):
     )
 
     await client.aclose()
+
+
+async def update_user(first_name: str, last_name: str, username: str):
+    client = create_client()
+
+    await client.query_single(
+        """
+        UPDATE default::User filter .username = <str>$username
+        SET {first_name := <str>$first_name, last_name := <str>$last_name};
+        """,
+        username=username,
+        first_name=first_name,
+        last_name=last_name,
+    )
+
+    await client.aclose()
+
+
+async def delete_user(username: str):
+    client = create_client()
+
+    delete = await client.query_single(
+        """
+        DELETE default::User filter .username = <str>$username;
+        """,
+        username=username,
+    )
+
+    await client.aclose()
+    return delete

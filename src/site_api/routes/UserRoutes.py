@@ -2,7 +2,8 @@ import json
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import (APIRouter, Depends, File, Form, HTTPException, UploadFile,
+                     status)
 from fastapi.responses import JSONResponse
 
 from site_api.constants import ACCESS_TOKEN_EXPIRE_MINUTES
@@ -20,11 +21,26 @@ async def make_users(user: CreateUser):
     return await dbf.insert_user(user)
 
 
-@user_router.post("/api/users/upload-pfp")
+@user_router.get("/api/users/delete")
+async def delete_users(user: Annotated[User, Depends(validate_user_token)]):
+    return await dbf.delete_user(user.username)
+
+
+@user_router.post("/api/users/update")
 async def upload_pfp(
-    user: Annotated[User, Depends(validate_user_token)], image: UploadFile = File(...)
+    user: Annotated[User, Depends(validate_user_token)],
+    first_name: str = Form(...),
+    last_name: str = Form(...),
+    image: UploadFile = File(None),
 ):
-    upload_profile_picture(user.username, image)
+    if image:
+        upload_profile_picture(user.username, image)
+
+    try:
+        await dbf.update_user(first_name, last_name, user.username)
+        return JSONResponse({"content": "Success"})
+    except Exception as e:
+        return JSONResponse({"content": "Failed"}, status_code=500)
 
 
 @user_router.get("/api/users/pfp")
