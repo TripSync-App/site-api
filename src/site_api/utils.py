@@ -51,7 +51,7 @@ def retrieve_pfp(username):
         return Response(content=b"", media_type="image/jpeg")
 
 
-def upload_thumbnail_image(discussion, image):
+def upload_thumbnail_image(vacation, image):
     client = create_client()
 
     db = client["thumbnails"]
@@ -59,25 +59,23 @@ def upload_thumbnail_image(discussion, image):
 
     file_id = fs.put(image.file, filename=image.filename)
 
-    discussion_to_thumbnail = {"discussion": discussion, "image_id": file_id}
-    dtt_collection = db["discussion_to_thumbnail"]
-    dtt_collection.insert_one(discussion_to_thumbnail)
+    vacation_to_thumbnail = {"vacation": vacation, "image_id": file_id}
+    vtt_collection = db["vacation_to_thumbnail"]
+    vtt_collection.insert_one(vacation_to_thumbnail)
 
     client.close()
 
     return {"message": "Thumbnail uploaded!"}
 
 
-def retrieve_thumbnail(discussion):
+def retrieve_thumbnail(vacation):
     client = create_client()
 
     db = client["thumbnails"]
     fs = GridFS(db)
-    discussion_to_thumbnail = db["discussion_to_thumbnail"]
+    vacation_to_thumbnail = db["vacation_to_thumbnail"]
     documents = (
-        discussion_to_thumbnail.find({"discussion": discussion})
-        .sort("_id", -1)
-        .limit(1)
+        vacation_to_thumbnail.find({"vacation": vacation}).sort("_id", -1).limit(1)
     )
     document = next(documents, None)
     if document:

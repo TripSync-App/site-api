@@ -1,11 +1,12 @@
 import json
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile
 
 from site_api.edgedb import DatabaseFunctions as dbf
-from site_api.routes.models.Models import CreateVacation, User
+from site_api.routes.models.Models import BaseVacation, CreateVacation, User
 from site_api.routes.utils.LoginUtils import validate_user_token
+from site_api.utils import retrieve_thumbnail, upload_thumbnail_image
 
 vacation_router = APIRouter()
 
@@ -45,3 +46,19 @@ async def make_vacations(
         create_vacation.vacation, create_vacation.team, current_user
     ):
         return vacation
+
+
+@vacation_router.post("/api/vacations/upload-thumbnail")
+async def upload_thumbnail(
+    _: Annotated[User, Depends(validate_user_token)],
+    vacation: BaseVacation,
+    image: UploadFile = File(...),
+):
+    upload_thumbnail_image(vacation.vacation_id, image)
+
+
+@vacation_router.get("/api/vacations/thumbnail/{id}")
+async def get_thumbnail(
+    vacation: BaseVacation, _: Annotated[User, Depends(validate_user_token)]
+):
+    return retrieve_thumbnail(vacation.vacation_id)

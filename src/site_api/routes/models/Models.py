@@ -45,6 +45,10 @@ class Vacation(BaseModel):
     name: str
 
 
+class BaseVacation(BaseModel):
+    vacation_id: int
+
+
 class CreateVacation(BaseModel):
     team: BaseTeam
     vacation: Vacation
