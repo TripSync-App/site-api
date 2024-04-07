@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -48,6 +48,10 @@ class Vacation(BaseModel):
 class CreateVacation(BaseModel):
     team: BaseTeam
     vacation: Vacation
+    imageUrl: Optional[str]
+    description: Optional[str]
+    tags: Optional[str]
+    color: Optional[str]
 
 
 class InviteCode(BaseModel):
