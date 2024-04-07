@@ -22,7 +22,9 @@ async def get_vacations(current_user: Annotated[User, Depends(validate_user_toke
 
 
 @vacation_router.get("/api/vacations/{vacation_id}")
-async def get_individual_vacation(vacation_id: int):
+async def get_individual_vacation(
+    vacation_id: int, _: Annotated[User, Depends(validate_user_token)]
+):
     vacation = await dbf.query(
         f"SELECT default::Vacation{{**, members: {{first_name, last_name, username, id}}}} FILTER .vacation_id = <int64>{vacation_id};",
         query_single=True,
