@@ -65,9 +65,7 @@ async def remove_user(
     remove_team_members: RemoveTeamMember,
     user: Annotated[User, Depends(validate_user_token)],
 ):
-    if _team := await dbf.remove_team_member(
-        remove_team_members.team, user
-    ):
+    if _team := await dbf.remove_team_member(remove_team_members.team, user):
         return _team
 
 
@@ -89,9 +87,9 @@ async def get_invite(
 ):
     invite_code = await dbf.get_invite(team=team)
     if invite_code:
-        invite_link = (
-            f"{request.headers.get("Referer")}invite/{invite_code.invite.code}"
-        )
+        base_url = str(request.url)
+        base_url = base_url.split("/api")[0]
+        invite_link = f"{base_url}/invite/{invite_code.invite.code}"
         return {"invite_link": invite_link}
     else:
         return {"error": "Invite code not found"}, 404
@@ -104,6 +102,7 @@ async def redeem_invite(
     user: Annotated[User, Depends(validate_user_token)],
 ):
     invite_code = await dbf.redeem_invite(code, user.username)
+
 
 @team_router.post("/api/teams/delete")
 async def delete_teams(
