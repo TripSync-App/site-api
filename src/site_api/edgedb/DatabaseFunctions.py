@@ -29,7 +29,7 @@ async def query(
     query = client.query
 
     if query_single:
-        query = client.query_single_json
+        query = client.query_single
 
     res = await query(query_statement, **kwargs)
     await client.aclose()
@@ -68,11 +68,12 @@ async def insert_message(message: dict):
 
     async for tx in client.transaction():
         async with tx:
-            query = f"INSERT default::Message {{text := <str>$text, author := (SELECT default::User filter .user_id = <int64>$author)}};"
+            query = f"INSERT default::Message {{text := <str>$text, author := (SELECT default::User filter .user_id = <int64>$author), discussion := (SELECT Discussion filter .discussion_id = <int64>$discussion)}};"
             return await tx.query_single_json(
                 query,
                 author=message.get("author"),
                 text=message.get("text"),
+                discussion=message.get("discussion"),
             )
 
     await client.aclose()

@@ -60,3 +60,14 @@ async def make_discussions(request: Request):
     assert res.get("discussion")
 
     return await dbf.insert_discussion(res.get("discussion"))
+
+
+@discussion_router.get("/api/discussions/messages/{discussion_id}")
+async def get_individual_message(
+    discussion_id: int, _: Annotated[User, Depends(validate_user_token)]
+):
+    message = await dbf.query(
+        f"SELECT default::Message{{*, author: {{first_name, last_name, username, id}}}} FILTER .discussion.discussion_id = {discussion_id};",
+    )
+
+    return message

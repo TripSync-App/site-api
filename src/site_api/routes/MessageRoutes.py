@@ -28,7 +28,7 @@ async def get_messages(current_user: Annotated[User, Depends(validate_user_token
 
 @message_router.get("/api/messages/team")
 async def get_team_messages(
-    current_user: Annotated[User, Depends(validate_user_token)]
+    current_user: Annotated[User, Depends(validate_user_token)],
 ):
     return await dbf.query(
         """
@@ -45,7 +45,9 @@ async def get_team_messages(
 
 
 @message_router.get("/api/messages/{message_id}")
-async def get_individual_message(message_id: int):
+async def get_individual_message(
+    message_id: int, current_user: Annotated[User, Depends(validate_user_token)]
+):
     message = await dbf.query(
         f"SELECT default::Message{{**, author: {{first_name, last_name, username, id}}}} FILTER .message_id = {message_id};",
         query_single=True,
