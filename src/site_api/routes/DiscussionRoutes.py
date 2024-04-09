@@ -5,7 +5,7 @@ from fastapi import (APIRouter, Depends, File, HTTPException, Request,
                      UploadFile, status)
 
 from site_api.edgedb import DatabaseFunctions as dbf
-from site_api.routes.models.Models import Discussion, User
+from site_api.routes.models.Models import CreateDiscussion, Discussion, User
 from site_api.routes.utils.LoginUtils import validate_user_token
 from site_api.utils import (generate_invite_code, retrieve_thumbnail,
                             upload_thumbnail_image)
@@ -55,11 +55,8 @@ async def get_thumbnail(
 
 
 @discussion_router.post("/api/discussions")
-async def make_discussions(request: Request):
-    res = await request.json()
-    assert res.get("discussion")
-
-    return await dbf.insert_discussion(res.get("discussion"))
+async def make_discussions(create_discussion: CreateDiscussion):
+    return await dbf.insert_discussion(create_discussion)
 
 
 @discussion_router.get("/api/discussions/messages/{discussion_id}")

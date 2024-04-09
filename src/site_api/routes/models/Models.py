@@ -15,7 +15,8 @@ class IDUser(BaseModel):
     user_id: int
 
 
-class User(BaseUser): ...
+class User(BaseUser):
+    ...
 
 
 class CreateUser(BaseUser):
@@ -64,3 +65,9 @@ class InviteCode(BaseModel):
 
 class Discussion(BaseModel):
     discussion_id: int
+
+
+class CreateDiscussion(BaseModel):
+    title: str
+    members: list
+    vacation: int

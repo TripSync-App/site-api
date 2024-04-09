@@ -79,22 +79,17 @@ async def insert_message(message: dict):
     await client.aclose()
 
 
-async def insert_discussion(discussion: dict):
+async def insert_discussion(discussion):
     client = create_client()
-    assert discussion.get("title") and isinstance(discussion.get("title"), str)
-    assert discussion.get("members") and isinstance(
-        discussion.get("members"), list
-    )  # NOTE: list[int]
-    assert discussion.get("vacation") and isinstance(discussion.get("vacation"), int)
-
     async for tx in client.transaction():
         async with tx:
             query = f"INSERT default::Discussion {{title := <str>$title, members := (SELECT default::User filter .user_id in array_unpack(<array<int64>>$members)), vacation := (SELECT default::Vacation filter .vacation_id = <int64>$vacation)}};"
+            print(query)
             return await tx.query_single_json(
                 query,
-                title=discussion.get("title"),
-                members=discussion.get("members"),
-                vacation=discussion.get("vacation"),
+                title=discussion.title,
+                members=discussion.members,
+                vacation=discussion.vacation,
             )
 
     await client.aclose()
