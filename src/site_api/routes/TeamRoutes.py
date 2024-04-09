@@ -102,6 +102,12 @@ async def redeem_invite(
     user: Annotated[User, Depends(validate_user_token)],
 ):
     invite_code = await dbf.redeem_invite(code, user.username)
+    await dbf.query(
+        f"with vacations := (SELECT default::Vacation) UPDATE vacations SET {{members += (SELECT default::User filter .username = '{user.username}')}}"
+    )
+    await dbf.query(
+        f"with vacations := (SELECT default::Discussion) UPDATE vacations SET {{members += (SELECT default::User filter .username = '{user.username}')}}"
+    )
 
 
 @team_router.post("/api/teams/delete")
