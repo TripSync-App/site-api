@@ -2,9 +2,11 @@ import json
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request
+from fastapi.responses import JSONResponse
 
 from site_api.edgedb import DatabaseFunctions as dbf
-from site_api.routes.models.Models import CreateDiscussion, Discussion, User
+from site_api.routes.models.Models import (CreateDiscussion, Discussion,
+                                           FinalizeDiscussion, User)
 from site_api.routes.utils.LoginUtils import validate_user_token
 
 discussion_router = APIRouter()
@@ -49,3 +51,14 @@ async def get_individual_message(
     )
 
     return message
+
+
+@discussion_router.post("/api/discussions/finalize")
+async def finalize_discussion(
+    _: Annotated[User, Depends(validate_user_token)], finalize: FinalizeDiscussion
+):
+    await dbf.query(
+        f"UPDATE default::Discussion filter .discussion_id = <int64>{finalize.discussion} SET {{finalized := {finalize.is_finalized}}}"
+    )
+
+    return JSONResponse({"status": "success"})

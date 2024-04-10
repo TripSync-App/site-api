@@ -71,3 +71,8 @@ class CreateDiscussion(BaseModel):
     title: str
     members: list
     vacation: int
+
+
+class FinalizeDiscussion(BaseModel):
+    discussion: int
+    is_finalized: bool

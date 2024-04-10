@@ -15,7 +15,7 @@ vacation_router = APIRouter()
 async def get_vacations(current_user: Annotated[User, Depends(validate_user_token)]):
     return await dbf.query(
         """
-        SELECT default::Vacation {**, members: {username, first_name, last_name, id}}
+        SELECT default::Vacation {**, discussions: {**, admin_user := default::Vacation.admin_user.username}, members: {username, first_name, last_name, id}}
         filter <str>$username in .members.username OR .admin_user.username = <str>$username;
         """,
         username=current_user.username,
@@ -27,7 +27,7 @@ async def get_individual_vacation(
     vacation_id: int, _: Annotated[User, Depends(validate_user_token)]
 ):
     vacation = await dbf.query(
-        f"SELECT default::Vacation{{**, discussions: {{*}}, members: {{first_name, last_name, username, id}}}} FILTER .vacation_id = <int64>{vacation_id};",
+        f"SELECT default::Vacation{{**, discussions: {{*, admin_user := default::Vacation.admin_user.username}}, members: {{first_name, last_name, username, id}}}} FILTER .vacation_id = <int64>{vacation_id};",
         query_single=True,
     )
 
