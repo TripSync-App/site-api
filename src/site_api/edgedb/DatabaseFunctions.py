@@ -95,7 +95,7 @@ async def insert_discussion(discussion):
     await client.aclose()
 
 
-async def insert_vacation(vacation: Vacation, team: BaseTeam, current_user: User):
+async def insert_vacation(create_vacation, current_user: User):
     client = create_client()
     try:
         async for tx in client.transaction():
@@ -107,6 +107,7 @@ async def insert_vacation(vacation: Vacation, team: BaseTeam, current_user: User
                     INSERT default::Vacation {
                         admin_user := (SELECT default::User filter .username = <str>$username),
                         name := <str>$name,
+                        members := (SELECT default::User filter .user_id in array_unpack(<array<int64>>$members))
                     }
                 )
                 UPDATE team SET {
@@ -119,9 +120,10 @@ async def insert_vacation(vacation: Vacation, team: BaseTeam, current_user: User
                 await client.aclose()
                 return await tx.query_single_json(
                     query,
-                    team_id=team.team_id,
+                    team_id=create_vacation.team,
                     username=current_user.username,
-                    name=vacation.name,
+                    name=create_vacation.vacation,
+                    members=create_vacation.members,
                 )
     except edgedb.ConstraintViolationError:
         raise HTTPException(403, "Can't have two vacations with the same name.")

@@ -15,8 +15,7 @@ class IDUser(BaseModel):
     user_id: int
 
 
-class User(BaseUser):
-    ...
+class User(BaseUser): ...
 
 
 class CreateUser(BaseUser):
@@ -51,12 +50,13 @@ class BaseVacation(BaseModel):
 
 
 class CreateVacation(BaseModel):
-    team: BaseTeam
-    vacation: Vacation
-    imageUrl: Optional[str]
-    description: Optional[str]
-    tags: Optional[str]
-    color: Optional[str]
+    team: int
+    vacation: str
+    members: list
+    # imageUrl: Optional[str]
+    # description: Optional[str]
+    # tags: Optional[str]
+    # color: Optional[str]
 
 
 class InviteCode(BaseModel):

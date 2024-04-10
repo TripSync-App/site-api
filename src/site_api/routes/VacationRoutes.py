@@ -40,9 +40,7 @@ async def make_vacations(
     create_vacation: CreateVacation,
     current_user: Annotated[User, Depends(validate_user_token)],
 ):
-    if vacation := await dbf.insert_vacation(
-        create_vacation.vacation, create_vacation.team, current_user
-    ):
+    if vacation := await dbf.insert_vacation(create_vacation, current_user):
         return vacation
 
 
