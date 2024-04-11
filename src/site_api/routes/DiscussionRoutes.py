@@ -57,8 +57,17 @@ async def get_individual_message(
 async def finalize_discussion(
     _: Annotated[User, Depends(validate_user_token)], finalize: FinalizeDiscussion
 ):
+
+    print(finalize)
     await dbf.query(
         f"UPDATE default::Discussion filter .discussion_id = <int64>{finalize.discussion} SET {{finalized := {finalize.is_finalized}}}"
     )
+
+    if finalize.is_finalized:
+        await dbf.query(
+            f"""UPDATE default::Discussion filter .discussion_id = <int64>{finalize.discussion} SET {{event := (
+                    INSERT Event {{date:='{finalize.date}', time:='{finalize.time}', address:='{finalize.address}', discussion_title:='{finalize.discussion_title}'}}
+            )}}"""
+        )
 
     return JSONResponse({"status": "success"})

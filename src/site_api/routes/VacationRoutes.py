@@ -1,10 +1,15 @@
+import csv
+import dataclasses
+import io
 import json
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, Response, UploadFile
+from fastapi.responses import StreamingResponse
 
 from site_api.edgedb import DatabaseFunctions as dbf
-from site_api.routes.models.Models import BaseVacation, CreateVacation, User
+from site_api.routes.models.Models import (BaseVacation, CreateVacation,
+                                           ExportVacation, User)
 from site_api.routes.utils.LoginUtils import validate_user_token
 from site_api.utils import retrieve_thumbnail, upload_thumbnail_image
 
@@ -58,3 +63,46 @@ async def get_thumbnail(
     vacation: BaseVacation, _: Annotated[User, Depends(validate_user_token)]
 ):
     return retrieve_thumbnail(vacation.vacation_id)
+
+
+@vacation_router.post("/api/vacations/export")
+async def export(
+    _: Annotated[User, Depends(validate_user_token)], vacation: ExportVacation
+):
+    # Fetching data from the database
+    data = await dbf.query(
+        f"SELECT default::Vacation {{discussions: {{event: {{*}}}}}} FILTER .vacation_id = <int64>{vacation.vacation};",
+    )
+
+    # Preparing CSV data
+    csv_data = []
+
+    v = dataclasses.asdict(data[0])  # Assuming unique vacation id, hence data[0]
+    discussions = v["discussions"]
+    for discussion in discussions:
+        event = discussion["event"]
+        if event:
+            csv_data.append(
+                {
+                    "Subject": event["discussion_title"],
+                    "Start Date": event["date"],
+                    "Start Time": event["time"],
+                    "Location": event["address"],
+                }
+            )
+
+    # Using StringIO to hold the CSV data
+    buffer = io.StringIO()
+    writer = csv.DictWriter(
+        buffer, fieldnames=["Subject", "Start Date", "Start Time", "Location"]
+    )
+    writer.writeheader()
+    writer.writerows(csv_data)
+
+    # Ensuring the pointer is at the beginning of the stream
+    buffer.seek(0)
+
+    # Creating a StreamingResponse
+    response = StreamingResponse(iter([buffer.getvalue()]), media_type="text/csv")
+    response.headers["Content-Disposition"] = "attachment; filename=export.csv"
+    return response

@@ -76,3 +76,11 @@ class CreateDiscussion(BaseModel):
 class FinalizeDiscussion(BaseModel):
     discussion: int
     is_finalized: bool
+    date: Optional[str]
+    discussion_title: Optional[str]
+    time: Optional[str]
+    address: Optional[str]
+
+
+class ExportVacation(BaseModel):
+    vacation: int
