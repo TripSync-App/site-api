@@ -80,6 +80,8 @@ class FinalizeDiscussion(BaseModel):
     discussion_title: Optional[str]
     time: Optional[str]
     address: Optional[str]
+    lat: Optional[float]
+    lng: Optional[float]
 
 
 class ExportVacation(BaseModel):

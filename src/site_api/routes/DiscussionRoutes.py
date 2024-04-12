@@ -66,7 +66,7 @@ async def finalize_discussion(
     if finalize.is_finalized:
         await dbf.query(
             f"""UPDATE default::Discussion filter .discussion_id = <int64>{finalize.discussion} SET {{event := (
-                    INSERT Event {{date:='{finalize.date}', time:='{finalize.time}', address:='{finalize.address}', discussion_title:='{finalize.discussion_title}'}}
+                    INSERT Event {{date:='{finalize.date}', time:='{finalize.time}', address:='{finalize.address}', discussion_title:='{finalize.discussion_title}', lat := {finalize.lat}, lng := {finalize.lng}}}
             )}}"""
         )
 

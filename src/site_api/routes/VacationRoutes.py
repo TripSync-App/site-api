@@ -32,7 +32,7 @@ async def get_individual_vacation(
     vacation_id: int, _: Annotated[User, Depends(validate_user_token)]
 ):
     vacation = await dbf.query(
-        f"SELECT default::Vacation{{**, discussions: {{*, admin_user := default::Vacation.admin_user.username}}, members: {{first_name, last_name, username, id}}}} FILTER .vacation_id = <int64>{vacation_id};",
+        f"SELECT default::Vacation{{**, discussions: {{*, admin_user := default::Vacation.admin_user.username, event: {{*}}}}, members: {{first_name, last_name, username, id}}}} FILTER .vacation_id = <int64>{vacation_id};",
         query_single=True,
     )
 
