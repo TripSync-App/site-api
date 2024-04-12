@@ -82,6 +82,9 @@ async def export(
     for discussion in discussions:
         event = discussion["event"]
         if event:
+            print(f"Event Time: {event['time']}")
+            print(f"Event Date: {event['date']}")
+
             csv_data.append(
                 {
                     "Subject": event["discussion_title"],
