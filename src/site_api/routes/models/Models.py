@@ -54,9 +54,9 @@ class CreateVacation(BaseModel):
     vacation: str
     members: list
     # imageUrl: Optional[str]
-    # description: Optional[str]
+    description: Optional[str]
     # tags: Optional[str]
-    # color: Optional[str]
+    color: Optional[str]
 
 
 class InviteCode(BaseModel):

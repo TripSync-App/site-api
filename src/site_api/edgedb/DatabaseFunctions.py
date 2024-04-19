@@ -107,7 +107,9 @@ async def insert_vacation(create_vacation, current_user: User):
                     INSERT default::Vacation {
                         admin_user := (SELECT default::User filter .username = <str>$username),
                         name := <str>$name,
-                        members := (SELECT default::User filter .user_id in array_unpack(<array<int64>>$members))
+                        members := (SELECT default::User filter .user_id in array_unpack(<array<int64>>$members)),
+                        description := <str>$name,
+                        color := <str>$color,
                     }
                 )
                 UPDATE team SET {
@@ -124,6 +126,8 @@ async def insert_vacation(create_vacation, current_user: User):
                     username=current_user.username,
                     name=create_vacation.vacation,
                     members=create_vacation.members,
+                    description=create_vacation.description,
+                    color=create_vacation.color,
                 )
     except edgedb.ConstraintViolationError:
         raise HTTPException(403, "Can't have two vacations with the same name.")
