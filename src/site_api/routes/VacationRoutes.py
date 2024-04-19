@@ -45,6 +45,12 @@ async def make_vacations(
     create_vacation: CreateVacation,
     current_user: Annotated[User, Depends(validate_user_token)],
 ):
+    if not create_vacation.description:
+        create_vacation.description = ""
+
+    if not create_vacation.color:
+        create_vacation.color = ""
+
     if vacation := await dbf.insert_vacation(create_vacation, current_user):
         return vacation
 
